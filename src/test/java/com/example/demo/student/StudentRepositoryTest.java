@@ -1,17 +1,25 @@
 package com.example.demo.student;
 
-import lombok.AllArgsConstructor;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@AllArgsConstructor
+@DataJpaTest
 class StudentRepositoryTest {
 
-    private final StudentRepository studentRepoTest;
+    @Autowired
+    private StudentRepository studentRepoTest;
+
+    @AfterEach
+    void tearDown() {
+        studentRepoTest.deleteAll();
+    }
 
     @Test
-    void itShouldCheckIfStudentExistsEmail() {
+    void itShouldCheckWhenStudentEmailExists() {
         // give
         String email = "jamila@gmail.com";
         Student student = new Student(
@@ -26,6 +34,18 @@ class StudentRepositoryTest {
 
         //then
         assertThat(expected).isTrue();
+    }
+
+    @Test
+    void itShouldCheckIfStudentEmailDoesNotExists() {
+        // give
+        String email = "jamila@gmail.com";
+
+        // when
+        boolean expected = studentRepoTest.selectExistsEmail(email);
+
+        //then
+        assertThat(expected).isFalse();
     }
 
 }
