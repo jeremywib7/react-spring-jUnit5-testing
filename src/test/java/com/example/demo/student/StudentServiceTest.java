@@ -1,34 +1,30 @@
 package com.example.demo.student;
 
-import org.junit.jupiter.api.AfterEach;
+import com.example.demo.student.exception.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-@DataJpaTest
+@ExtendWith(MockitoExtension.class)
 class StudentServiceTest {
 
     @Mock
     private StudentRepository studentRepository;
-    private AutoCloseable autoCloseable;
     private StudentService underTest;
 
     @BeforeEach
     void setUp() {
-        autoCloseable = MockitoAnnotations.openMocks(this);
         underTest = new StudentService(studentRepository);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        autoCloseable.close();
     }
 
     @Test
@@ -41,8 +37,23 @@ class StudentServiceTest {
     }
 
     @Test
-    @Disabled
-    void addStudent() {
+    void willThrowWhenEmailIsTaken() {
+        // given
+        Student student = new Student(
+                "Jamila",
+                "jamila@gmail.com",
+                Gender.FEMALE
+        );
+        given(studentRepository.selectExistsEmail(anyString()))
+                .willReturn(true);
+
+        // when
+        assertThatThrownBy(() -> underTest.addStudent(student))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Email " + student.getEmail() + " taken");
+
+        // then
+        verify(studentRepository, never()).save(any());
     }
 
     @Test
